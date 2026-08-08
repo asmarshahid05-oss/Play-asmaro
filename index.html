@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة ألعاب التيك توك LIVE - متجر الاشتراكات المخصصة</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at center, #1a0826, #05020a);
+            color: #fff; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+        }
+
+        /* --- 1. شاشات التسجيل (Auth Steps) --- */
+        .auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 2, 10, 0.95); backdrop-filter: blur(15px);
+            z-index: 300; display: flex; justify-content: center; align-items: center;
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.05); border: 2px solid #ff007f;
+            border-radius: 20px; padding: 30px; width: 90%; max-width: 450px;
+            text-align: center; box-shadow: 0 0 30px rgba(255, 0, 127, 0.4);
+        }
+
+        .auth-card h2 { color: #ffcc00; margin-bottom: 10px; font-size: 1.6rem; }
+        .auth-card p { color: #aaa; font-size: 0.9rem; margin-bottom: 20px; }
+
+        .auth-card input, .auth-card textarea, .auth-card select {
+            width: 100%; background: rgba(0, 0, 0, 0.6); border: 1px solid rgba(0, 191, 255, 0.5);
+            color: #fff; padding: 12px; border-radius: 10px; font-size: 0.95rem;
+            outline: none; margin-bottom: 15px; font-family: inherit;
+        }
+
+        .btn-main {
+            background: linear-gradient(135deg, #ff007f, #7928ca); border: none;
+            color: white; font-size: 1rem; font-weight: bold; padding: 12px 25px;
+            border-radius: 10px; cursor: pointer; width: 100%; transition: 0.2s;
+            text-decoration: none; display: inline-block;
+        }
+
+        .btn-main:hover { transform: scale(1.02); opacity: 0.9; }
+
+        .btn-skip {
+            background: transparent; border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ccc; padding: 8px 15px; border-radius: 8px; cursor: pointer;
+            margin-top: 10px; font-size: 0.85rem; width: 100%;
+        }
+
+        /* --- 2. واجهة المتجر (Store View) --- */
+        #store-section { display: none; width: 95%; max-width: 1100px; margin: 20px 0; }
+
+        .store-header {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255, 255, 255, 0.05); border-radius: 15px;
+            padding: 15px 25px; margin-bottom: 25px; border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .user-welcome { font-size: 1.1rem; color: #00bfff; font-weight: bold; }
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+
+        .btn-admin-login {
+            background: linear-gradient(135deg, #ffcc00, #ff9900); border: none;
+            color: #000; font-weight: 900; padding: 8px 18px; border-radius: 8px; cursor: pointer;
+        }
+
+        .btn-logout {
+            background: rgba(255, 0, 51, 0.2); border: 1px solid #ff0033;
+            color: #ff0033; font-weight: bold; padding: 8px 14px; border-radius: 8px; cursor: pointer;
+        }
+
+        .games-grid { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+
+        .game-card {
+            background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 0, 127, 0.3);
+            border-radius: 15px; width: 310px; padding: 20px; display: flex;
+            flex-direction: column; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative; overflow: hidden;
+        }
+
+        .game-card img.game-banner {
+            width: 100%; height: 160px; object-fit: cover; border-radius: 10px; margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .game-card h3 { color: #fff; margin: 5px 0 10px 0; text-align: center; }
+        .game-price { color: #ff007f; font-size: 1.4rem; font-weight: bold; margin-bottom: 15px; }
+
+        .status-badge {
+            font-size: 0.85rem; padding: 5px 12px; border-radius: 15px; margin-bottom: 15px;
+            font-weight: bold; width: 100%; text-align: center;
+        }
+        .status-locked { background: rgba(255, 0, 51, 0.2); color: #ff0033; border: 1px solid #ff0033; }
+        .status-active { background: rgba(0, 255, 127, 0.2); color: #00ff7f; border: 1px solid #00ff7f; }
+
+        .btn-play-game {
+            background: linear-gradient(135deg, #00bfff, #00ff7f); border: none; color: #000;
+            padding: 12px; border-radius: 10px; font-weight: 900; cursor: pointer;
+            width: 100%; font-size: 1.1rem; margin-top: 10px; display: none;
+        }
+
+        /* --- 3. نافذة Wish Money --- */
+        #payment-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); z-index: 400;
+            justify-content: center; align-items: center;
+        }
+
+        /* --- 4. لوحة تحكم الأدمن (Admin Panel) --- */
+        #admin-panel {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 2, 10, 0.98); backdrop-filter: blur(20px); z-index: 500;
+            padding: 30px; overflow-y: auto;
+        }
+
+        .admin-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ffcc00; padding-bottom: 15px; margin-bottom: 20px; }
+        
+        .admin-section {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px; padding: 20px; margin-bottom: 30px;
+        }
+
+        .admin-section h3 { color: #ffcc00; margin-top: 0; border-bottom: 1px dashed rgba(255, 204, 0, 0.3); padding-bottom: 10px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: rgba(0,0,0,0.3); }
+        th, td { border: 1px solid rgba(255,255,255,0.1); padding: 10px; text-align: center; }
+        th { background: rgba(255, 204, 0, 0.2); color: #ffcc00; }
+
+        .days-input {
+            background: rgba(0, 0, 0, 0.7); border: 1px solid #00bfff;
+            color: #ffcc00; padding: 6px; border-radius: 6px; outline: none;
+            width: 70px; text-align: center; font-weight: bold; font-size: 1rem;
+        }
+
+        .form-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 15px;
+        }
+
+        .form-group { display: flex; flex-direction: column; text-align: right; }
+        .form-group label { margin-bottom: 5px; color: #00bfff; font-size: 0.9rem; font-weight: bold; }
+
+        .game-checkbox-item {
+            display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.4);
+            padding: 5px 10px; border-radius: 6px; margin: 3px 0; text-align: right; font-size: 0.85rem;
+        }
+
+        /* --- 5. شاشة اللعبة الأساسية --- */
+        #game-section { display: none; width: 100%; flex-direction: column; align-items: center; }
+
+        #settings-panel {
+            width: 95%; max-width: 1000px; background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px; padding: 15px; margin: 15px 0; display: flex; flex-wrap: wrap; gap: 15px; justify-content: space-around;
+        }
+
+        .setting-group {
+            background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 12px 15px; border-radius: 15px; display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 220px;
+        }
+
+        .setting-group label { font-size: 0.8rem; color: #ffcc00; font-weight: bold; }
+        .setting-group input[type="text"], .setting-group input[type="number"] {
+            background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 0, 127, 0.4);
+            color: #fff; padding: 6px; border-radius: 8px; outline: none;
+        }
+
+        #start-btn {
+            background: linear-gradient(135deg, #ff007f, #7928ca, #00bfff); border: none;
+            color: white; font-size: 1.1rem; font-weight: bold; padding: 12px 30px; border-radius: 12px; cursor: pointer; align-self: center;
+        }
+
+        #game-container {
+            width: 95%; max-width: 1000px; height: 650px; background: rgba(20, 10, 30, 0.6);
+            backdrop-filter: blur(20px); border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 25px; display: flex; flex-direction: column; position: relative; overflow: hidden; margin-bottom: 30px;
+        }
+
+        #header { height: 70px; background: rgba(0, 0, 0, 0.4); border-bottom: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: center; align-items: center; padding: 0 30px; position: relative; }
+        #game-title { position: absolute; right: 25px; font-size: 1.1rem; font-weight: bold; color: #ddd; }
+        #timer { color: #ffcc00; font-size: 1.6rem; font-weight: 900; }
+
+        #game-area { flex: 1; display: flex; position: relative; overflow: hidden; }
+
+        #pink-wall { position: absolute; top: 0; right: 0; height: 100%; background: linear-gradient(135deg, rgba(255, 0, 127, 0.6), rgba(186, 12, 248, 0.6)); border-right: 4px solid #ff007f; width: 50%; display: flex; justify-content: center; padding-top: 20px; z-index: 1; transition: width 0.1s linear; }
+        #blue-wall { position: absolute; top: 0; left: 0; height: 100%; background: linear-gradient(135deg, rgba(0, 191, 255, 0.6), rgba(0, 81, 255, 0.6)); border-left: 4px solid #00bfff; width: 50%; display: flex; justify-content: center; padding-top: 20px; z-index: 1; transition: width 0.1s linear; }
+
+        .wall-title { font-size: 1.6rem; font-weight: bold; background: rgba(0,0,0,0.3); padding: 5px 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); height: max-content; }
+
+        .character-container { position: absolute; top: 48%; transform: translateY(-50%); width: 320px; height: 440px; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; transition: left 0.1s linear, right 0.1s linear; }
+        .wall-counter { font-size: 2.8rem; font-weight: 900; color: #fff; position: absolute; top: -60px; z-index: 30; background: rgba(0, 0, 0, 0.6); padding: 2px 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); }
+
+        #winner-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 2, 10, 0.92); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 100; gap: 20px; }
+        #winner-text { font-size: 2.8rem; font-weight: 900; color: #ffcc00; text-align: center; }
+
+        /* --- 6. مشغل الألعاب الخارجية المضافة --- */
+        #dynamic-game-section { display: none; width: 100%; flex-direction: column; align-items: center; }
+        #dynamic-iframe { width: 95%; max-width: 1100px; height: 750px; border: 2px solid #ff007f; border-radius: 20px; background: #000; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. شاشة تسجيل Gmail -->
+    <div class="auth-overlay" id="step-gmail">
+        <div class="auth-card">
+            <h2>تسجيل الدخول 🚀</h2>
+            <p>أدخل بريدك الإلكتروني (Gmail) للبدء</p>
+            <input type="email" id="input-gmail" placeholder="example@gmail.com">
+            <button class="btn-main" onclick="nextStepName()">التالي ➔</button>
+        </div>
+    </div>
+
+    <!-- 2. شاشة تسجيل الاسم -->
+    <div class="auth-overlay" id="step-name" style="display: none;">
+        <div class="auth-card">
+            <h2>أهلاً بك! 👋</h2>
+            <p>يرجى كتابة اسمك الكامل</p>
+            <input type="text" id="input-name" placeholder="أدخل اسمك هنا">
+            <button class="btn-main" onclick="nextStepPhone()">التالي ➔</button>
+        </div>
+    </div>
+
+    <!-- 3. شاشة تسجيل رقم الهاتف -->
+    <div class="auth-overlay" id="step-phone" style="display: none;">
+        <div class="auth-card">
+            <h2>رقم الهاتف 📱</h2>
+            <p>أدخل رقم هاتفك لتلقي إشعارات التفعيل (اختياري)</p>
+            <input type="tel" id="input-phone" placeholder="مثال: +961 76 774 306">
+            <button class="btn-main" onclick="finishAuth(false)">حفظ والدخول للمتجر 🛒</button>
+            <button class="btn-skip" onclick="finishAuth(true)">تخطي هذه الخطوة ↷</button>
+        </div>
+    </div>
+
+    <!-- 4. واجهة المتجر -->
+    <div id="store-section">
+        <div class="store-header">
+            <div>
+                <span class="user-welcome" id="user-display-name">مرحباً</span>
+                <p style="margin: 3px 0 0 0; font-size: 0.8rem; color: #aaa;" id="user-display-gmail"></p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-admin-login" onclick="promptAdminLogin()">لوحة التحكم (GO) 🔑</button>
+                <button class="btn-logout" onclick="logoutUser()">خروج 🚪</button>
+            </div>
+        </div>
+
+        <h1 style="text-align: center; color: #ffcc00; margin-bottom: 20px;">🎮 متجر ألعاب الـ LIVE</h1>
+
+        <div class="games-grid" id="games-container">
+            <!-- تتولد الكروت تلقائياً -->
+        </div>
+    </div>
+
+    <!-- 5. نافذة Wish Money -->
+    <div id="payment-modal">
+        <div class="auth-card">
+            <h3 style="color: #ffcc00; margin-top: 0;">Wish Money 💸</h3>
+            <p>قم بتحويل المبلغ للرقم المخصص عبر Wish Money:</p>
+            <div style="background: rgba(0,0,0,0.6); padding: 12px; border-radius: 10px; border: 1px dashed #00bfff; color: #00bfff; font-size: 1.4rem; font-weight: bold; margin: 15px 0;">
+                +961 76 774 306
+            </div>
+            <a href="tel:+96176774306" class="btn-main" style="margin-bottom: 10px; background: #00bfff; color: #000;">إرسال عبر تطبيق Wish / اتصال 📲</a>
+            <p style="font-size: 0.8rem; color: #aaa;">بعد تحويل المبلغ، حدد للأدمن اسم اللعبة وسيفعلها لك فوراً.</p>
+            <button class="btn-skip" onclick="closePayment()">إغلاق النافذة ✖</button>
+        </div>
+    </div>
+
+    <!-- 6. لوحة تحكم الأدمن -->
+    <div id="admin-panel">
+        <div class="admin-header">
+            <h2>👑 لوحة تحكم الأدمن الشاملة</h2>
+            <button class="btn-main" style="width: auto; background: #ff0033;" onclick="closeAdmin()">إغلاق اللوحة ✖</button>
+        </div>
+
+        <!-- قسم إضافة/تعديل لعبة -->
+        <div class="admin-section">
+            <h3 id="form-action-title">➕ إضافة أو تعديل لعبة في المتجر</h3>
+            <input type="hidden" id="edit-game-index" value="-1">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>عنوان/اسم اللعبة:</label>
+                    <input type="text" id="new-game-title" placeholder="مثال: لعبة عجل الحظ التفاعلية">
+                </div>
+                <div class="form-group">
+                    <label>سعر اللعبة:</label>
+                    <input type="text" id="new-game-price" placeholder="مثال: 15$ / شهرياً">
+                </div>
+                <div class="form-group">
+                    <label>رابط الصورة أو ارفع صورة اللعبة:</label>
+                    <input type="text" id="new-game-img" placeholder="ضع رابط صورة أو استخدم الرفع بالأسفل">
+                    <input type="file" id="new-game-file" accept="image/*" style="margin-top: 5px;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>كود وسكريبت اللعبة (HTML / CSS / JavaScript):</label>
+                <textarea id="new-game-code" rows="6" placeholder="أدخل كود HTML/JS الخاص باللعبة هنا بالكامل..."></textarea>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-main" id="btn-save-game" style="background: linear-gradient(135deg, #00bfff, #00ff7f); color: #000;" onclick="saveGame()">➕ حفظ اللعبة في المتجر</button>
+                <button class="btn-skip" id="btn-cancel-edit" style="display: none; width: auto;" onclick="resetGameForm()">إلغاء التعديل ✖</button>
+            </div>
+        </div>
+
+        <!-- قسم إدارة الألعاب المضافة -->
+        <div class="admin-section">
+            <h3>🎮 الألعاب المتوفرة للتحكم والتعديل</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>معرف اللعبة (ID)</th>
+                        <th>صورة اللعبة</th>
+                        <th>العنوان</th>
+                        <th>السعر</th>
+                        <th>الإجراءات والتعديل</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-games-table">
+                </tbody>
+            </table>
+        </div>
+
+        <!-- قسم إدارة المستخدمين وتحديد الألعاب -->
+        <div class="admin-section">
+            <h3>👥 إدارة مشتركين القناة وتحديد الألعاب المفتوحة لكل شخص</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>الاسم والـ Gmail</th>
+                        <th>رقم الهاتف</th>
+                        <th>الأيام المتبقية</th>
+                        <th>تحديد الألعاب المتاحة للمستخدم 🎯</th>
+                        <th>التحكم بالحساب</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-users-table">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 7. قسم اللعبة الافتراضية (البوكس والجدار) -->
+    <div id="game-section">
+        <div style="width: 95%; max-width: 1000px; display: flex; justify-content: space-between; align-items: center; margin: 10px 0;">
+            <button class="btn-main" style="width: auto; background: #ff0033;" onclick="exitGame()">العودة للمتجر 🔙</button>
+            <span style="color: #00ff7f; font-weight: bold;" class="game-active-days-info">✓ تم التفعيل بنجاح</span>
+        </div>
+
+        <div id="settings-panel">
+            <div class="setting-group">
+                <label>الفريق الأزرق (الشباب):</label>
+                <input type="text" id="blue-name-input" value="فريق الشباب">
+            </div>
+            <div class="setting-group">
+                <label>الفريق الوردي (البنات):</label>
+                <input type="text" id="pink-name-input" value="فريق البنات">
+            </div>
+            <div class="setting-group" style="justify-content: center; align-items: center;">
+                <label>وقت اللعبة (بالثواني):</label>
+                <input type="number" id="time-input" value="60" min="5" style="width: 80px; text-align: center;">
+                <button id="start-btn" onclick="applySettingsAndStart()">بدء المباراة ⚡</button>
+            </div>
+        </div>
+
+        <div id="game-container">
+            <div id="header">
+                <div id="game-title">🥊 تحدي البوكس والجدار</div>
+                <div id="timer">الوقت: 60</div>
+            </div>
+            <div id="game-area">
+                <div id="pink-wall"><div class="wall-title" id="pink-team-display">فريق البنات</div></div>
+                <div id="blue-wall"><div class="wall-title" id="blue-team-display">فريق الشباب</div></div>
+                <div id="boy-container" class="character-container">
+                    <div class="wall-counter" id="blue-counter">0</div>
+                </div>
+                <div id="girl-container" class="character-container">
+                    <div class="wall-counter" id="pink-counter">0</div>
+                </div>
+            </div>
+            <div id="winner-screen">
+                <div id="winner-text"></div>
+                <button class="btn-main" style="width: auto;" onclick="applySettingsAndStart()">إعادة المباراة 🔄</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. قسم تشغيل الألعاب الخارجية المضافة -->
+    <div id="dynamic-game-section">
+        <div style="width: 95%; max-width: 1100px; display: flex; justify-content: space-between; align-items: center; margin: 15px 0;">
+            <button class="btn-main" style="width: auto; background: #ff0033;" onclick="exitDynamicGame()">العودة للمتجر 🔙</button>
+            <h2 id="dynamic-game-title" style="color: #ffcc00; margin: 0;"></h2>
+        </div>
+        <iframe id="dynamic-iframe"></iframe>
+    </div>
+
+    <script>
+        // --- إدارة البيانات والمستخدمين والألعاب ---
+        let usersDB = JSON.parse(localStorage.getItem('store_users_db')) || [];
+        let customGamesDB = JSON.parse(localStorage.getItem('store_custom_games')) || [];
+        let activeGmail = localStorage.getItem('active_user_gmail') || null;
+        let currentUser = null;
+        let tempGameImgBase64 = "";
+
+        // اللعبة الافتراضية
+        const defaultGame = {
+            id: 'default_box_game',
+            title: '🥊 تحدي البوكس والجدار',
+            price: '10$ / شهرياً',
+            img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=400&q=80'
+        };
+
+        window.onload = function() {
+            calculateRemainingDays();
+            if(activeGmail) {
+                const found = usersDB.find(u => u.gmail === activeGmail);
+                if(found) {
+                    currentUser = found;
+                    showStoreView();
+                    return;
+                }
+            }
+            document.getElementById('step-gmail').style.display = 'flex';
+        };
+
+        // معالجة رفع صورة اللعبة
+        document.getElementById('new-game-file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) { tempGameImgBase64 = evt.target.result; };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function calculateRemainingDays() {
+            const today = new Date().toISOString().split('T')[0];
+            let changed = false;
+
+            usersDB.forEach(user => {
+                if(!user.allowedGames) user.allowedGames = []; // قائمة الألعاب المفعلة لكل مستخدم
+                
+                if (user.allowed && user.totalDays > 0 && user.startDate) {
+                    const start = new Date(user.startDate);
+                    const current = new Date(today);
+                    const diffDays = Math.floor((current - start) / (1000 * 60 * 60 * 24));
+
+                    if (diffDays > 0) {
+                        user.remainingDays = Math.max(0, user.totalDays - diffDays);
+                        if (user.remainingDays <= 0) user.allowed = false;
+                        changed = true;
+                    } else {
+                        user.remainingDays = user.totalDays;
+                    }
+                }
+            });
+            if (changed) saveDB();
+        }
+
+        function nextStepName() {
+            const gmail = document.getElementById('input-gmail').value.trim().toLowerCase();
+            if(!gmail || !gmail.includes('@')) { alert('يرجى إدخال بريد Gmail صحيح!'); return; }
+            
+            const existingUser = usersDB.find(u => u.gmail === gmail);
+            if(existingUser) {
+                currentUser = existingUser;
+                localStorage.setItem('active_user_gmail', currentUser.gmail);
+                document.getElementById('step-gmail').style.display = 'none';
+                showStoreView();
+                return;
+            }
+
+            currentUser = { gmail: gmail, name: '', phone: '', allowed: false, totalDays: 0, remainingDays: 0, startDate: '', allowedGames: [] };
+            document.getElementById('step-gmail').style.display = 'none';
+            document.getElementById('step-name').style.display = 'flex';
+        }
+
+        function nextStepPhone() {
+            const name = document.getElementById('input-name').value.trim();
+            if(!name) { alert('يرجى إدخال اسمك!'); return; }
+            currentUser.name = name;
+            document.getElementById('step-name').style.display = 'none';
+            document.getElementById('step-phone').style.display = 'flex';
+        }
+
+        function finishAuth(isSkipped) {
+            currentUser.phone = isSkipped ? 'غير محدد (تخطي)' : (document.getElementById('input-phone').value.trim() || 'غير محدد');
+            usersDB.push(currentUser);
+            saveDB();
+            localStorage.setItem('active_user_gmail', currentUser.gmail);
+            document.getElementById('step-phone').style.display = 'none';
+            showStoreView();
+        }
+
+        function showStoreView() {
+            calculateRemainingDays();
+            document.getElementById('store-section').style.display = 'block';
+            document.getElementById('user-display-name').innerText = `أهلاً بك، ${currentUser.name || 'مستخدم'}`;
+            document.getElementById('user-display-gmail').innerText = currentUser.gmail;
+            renderStoreGames();
+        }
+
+        function renderStoreGames() {
+            calculateRemainingDays();
+            const latest = usersDB.find(u => u.gmail === currentUser.gmail);
+            if(latest) currentUser = latest;
+
+            const container = document.getElementById('games-container');
+            container.innerHTML = '';
+
+            const isUserValid = currentUser.allowed && currentUser.remainingDays > 0;
+
+            // 1. عرض اللعبة الافتراضية
+            const defaultHasAccess = isUserValid && currentUser.allowedGames && currentUser.allowedGames.includes(defaultGame.id);
+            const defaultCard = document.createElement('div');
+            defaultCard.className = 'game-card';
+            defaultCard.innerHTML = `
+                <img src="${defaultGame.img}" class="game-banner" alt="${defaultGame.title}">
+                <h3>${defaultGame.title}</h3>
+                <div class="game-price">${defaultGame.price}</div>
+                <div class="status-badge ${defaultHasAccess ? 'status-active' : 'status-locked'}">
+                    ${defaultHasAccess ? `✓ مفعل - متبقي (${currentUser.remainingDays}) يوم` : '🔒 غير مفعل لهذا الحساب'}
+                </div>
+                ${defaultHasAccess 
+                    ? `<button class="btn-play-game" style="display:block;" onclick="launchGame('default')">تشغيل اللعبة الآن ⚡</button>`
+                    : `<button class="btn-main" onclick="openPayment()">اشتراك عبر Wish 💳</button>`
+                }
+            `;
+            container.appendChild(defaultCard);
+
+            // 2. عرض الألعاب المضافة
+            customGamesDB.forEach((game, index) => {
+                const gameId = game.id || ('custom_' + index);
+                const hasAccess = isUserValid && currentUser.allowedGames && currentUser.allowedGames.includes(gameId);
+
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                card.innerHTML = `
+                    <img src="${game.img || 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=400&q=80'}" class="game-banner" alt="${game.title}">
+                    <h3>${game.title}</h3>
+                    <div class="game-price">${game.price}</div>
+                    <div class="status-badge ${hasAccess ? 'status-active' : 'status-locked'}">
+                        ${hasAccess ? `✓ مفعل - متبقي (${currentUser.remainingDays}) يوم` : '🔒 غير مفعل لهذا الحساب'}
+                    </div>
+                    ${hasAccess 
+                        ? `<button class="btn-play-game" style="display:block;" onclick="launchCustomGame(${index})">تشغيل اللعبة الآن ⚡</button>`
+                        : `<button class="btn-main" onclick="openPayment()">اشتراك عبر Wish 💳</button>`
+                    }
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function logoutUser() {
+            localStorage.removeItem('active_user_gmail');
+            location.reload();
+        }
+
+        function saveDB() {
+            localStorage.setItem('store_users_db', JSON.stringify(usersDB));
+            localStorage.setItem('store_custom_games', JSON.stringify(customGamesDB));
+        }
+
+        function promptAdminLogin() {
+            const pass = prompt("أدخل كلمة سر الأدمن (GO):");
+            if(pass === "205080") {
+                renderAdminGames();
+                renderAdminUsers();
+                document.getElementById('admin-panel').style.display = 'block';
+            } else if(pass !== null) {
+                alert("كلمة السر غير صحيحة!");
+            }
+        }
+
+        function closeAdmin() {
+            document.getElementById('admin-panel').style.display = 'none';
+            showStoreView();
+        }
+
+        // --- حفظ وتعديل الألعاب من قبل الأدمن ---
+        function saveGame() {
+            const title = document.getElementById('new-game-title').value.trim();
+            const price = document.getElementById('new-game-price').value.trim() || '10$ / شهرياً';
+            let img = document.getElementById('new-game-img').value.trim();
+            const code = document.getElementById('new-game-code').value.trim();
+            const editIndex = parseInt(document.getElementById('edit-game-index').value);
+
+            if(!title || !code) {
+                alert('يرجى كتابة عنوان اللعبة وكود/سكريبت اللعبة على الأقل!');
+                return;
+            }
+
+            if(tempGameImgBase64) img = tempGameImgBase64;
+
+            if(editIndex >= 0) {
+                // تعديل لعبة موجودة
+                customGamesDB[editIndex].title = title;
+                customGamesDB[editIndex].price = price;
+                if(img) customGamesDB[editIndex].img = img;
+                customGamesDB[editIndex].code = code;
+                alert('✓ تم تحديث وتعديل بيانات اللعبة بنجاح!');
+            } else {
+                // إضافة لعبة جديدة
+                const newId = 'game_' + Date.now();
+                customGamesDB.push({ id: newId, title: title, price: price, img: img, code: code });
+                alert('✓ تم إضافة اللعبة بنجاح إلى المتجر!');
+            }
+
+            saveDB();
+            resetGameForm();
+            renderAdminGames();
+            renderAdminUsers();
+            renderStoreGames();
+        }
+
+        function editGame(index) {
+            const game = customGamesDB[index];
+            document.getElementById('new-game-title').value = game.title;
+            document.getElementById('new-game-price').value = game.price;
+            document.getElementById('new-game-img').value = game.img.startsWith('data:') ? '' : game.img;
+            document.getElementById('new-game-code').value = game.code;
+            document.getElementById('edit-game-index').value = index;
+
+            document.getElementById('form-action-title').innerText = '✏️ تعديل اللعبة: ' + game.title;
+            document.getElementById('btn-save-game').innerText = '💾 تحديث بيانات اللعبة';
+            document.getElementById('btn-cancel-edit').style.display = 'inline-block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetGameForm() {
+            document.getElementById('new-game-title').value = '';
+            document.getElementById('new-game-price').value = '';
+            document.getElementById('new-game-img').value = '';
+            document.getElementById('new-game-code').value = '';
+            document.getElementById('edit-game-index').value = '-1';
+            tempGameImgBase64 = "";
+
+            document.getElementById('form-action-title').innerText = '➕ إضافة أو تعديل لعبة في المتجر';
+            document.getElementById('btn-save-game').innerText = '➕ حفظ اللعبة في المتجر';
+            document.getElementById('btn-cancel-edit').style.display = 'none';
+        }
+
+        function deleteCustomGame(index) {
+            if(confirm('هل أنت تأكد من حذف هذه اللعبة بالكامل؟')) {
+                customGamesDB.splice(index, 1);
+                saveDB();
+                renderAdminGames();
+                renderAdminUsers();
+                renderStoreGames();
+            }
+        }
+
+        function renderAdminGames() {
+            const tbody = document.getElementById('admin-games-table');
+            tbody.innerHTML = '';
+            customGamesDB.forEach((game, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><code>${game.id || 'custom_' + index}</code></td>
+                    <td><img src="${game.img || 'https://via.placeholder.com/50'}" style="width: 50px; height: 35px; object-fit: cover; border-radius: 5px;"></td>
+                    <td><b>${game.title}</b></td>
+                    <td>${game.price}</td>
+                    <td>
+                        <button onclick="editGame(${index})" style="background: #ffcc00; border: none; color: #000; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-left: 5px;">تعديل ✏️</button>
+                        <button onclick="deleteCustomGame(${index})" style="background: #ff0033; border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">حذف 🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- إدارة المستخدمين وربط الألعاب المتاحة لكل زبون ---
+        function renderAdminUsers() {
+            calculateRemainingDays();
+            const tbody = document.getElementById('admin-users-table');
+            tbody.innerHTML = '';
+
+            usersDB.forEach((user, uIndex) => {
+                if(!user.allowedGames) user.allowedGames = [];
+
+                // بناء خيارات الألعاب
+                let gamesCheckboxesHTML = `
+                    <div class="game-checkbox-item">
+                        <input type="checkbox" id="user_${uIndex}_def" ${user.allowedGames.includes(defaultGame.id) ? 'checked' : ''} onchange="toggleUserGameAccess(${uIndex}, '${defaultGame.id}')">
+                        <label for="user_${uIndex}_def">🥊 تحدي البوكس والجدار</label>
+                    </div>
+                `;
+
+                customGamesDB.forEach((g, gIdx) => {
+                    const gId = g.id || ('custom_' + gIdx);
+                    gamesCheckboxesHTML += `
+                        <div class="game-checkbox-item">
+                            <input type="checkbox" id="user_${uIndex}_${gIdx}" ${user.allowedGames.includes(gId) ? 'checked' : ''} onchange="toggleUserGameAccess(${uIndex}, '${gId}')">
+                            <label for="user_${uIndex}_${gIdx}">🎮 ${g.title}</label>
+                        </div>
+                    `;
+                });
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><b>${user.name || 'زائر'}</b><br><small style="color:#aaa;">${user.gmail}</small></td>
+                    <td>${user.phone}</td>
+                    <td>
+                        <input type="number" class="days-input" value="${user.remainingDays || 0}" min="0" onchange="setUserDays(${uIndex}, this.value)"> يوم
+                    </td>
+                    <td><div style="max-height: 120px; overflow-y: auto;">${gamesCheckboxesHTML}</div></td>
+                    <td>
+                        <button onclick="toggleOverallAccess(${uIndex})" style="background: ${user.allowed ? '#ff0033' : '#00bfff'}; border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                            ${user.allowed ? 'إغلاق الحساب ✖' : 'فتح الحساب (GO) ⚡'}
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function toggleUserGameAccess(userIndex, gameId) {
+            if(!usersDB[userIndex].allowedGames) usersDB[userIndex].allowedGames = [];
+            
+            const idx = usersDB[userIndex].allowedGames.indexOf(gameId);
+            if(idx > -1) {
+                usersDB[userIndex].allowedGames.splice(idx, 1);
+            } else {
+                usersDB[userIndex].allowedGames.push(gameId);
+                // تفعيل صلاحية الحساب وتحديد 30 يوم تلقائياً إذا كانت 0
+                if(usersDB[userIndex].remainingDays <= 0) {
+                    usersDB[userIndex].totalDays = 30;
+                    usersDB[userIndex].remainingDays = 30;
+                    usersDB[userIndex].startDate = new Date().toISOString().split('T')[0];
+                }
+                usersDB[userIndex].allowed = true;
+            }
+            saveDB();
+            renderAdminUsers();
+            renderStoreGames();
+        }
+
+        function setUserDays(index, daysCount) {
+            const count = parseInt(daysCount) || 0;
+            usersDB[index].totalDays = count;
+            usersDB[index].remainingDays = count;
+            usersDB[index].startDate = new Date().toISOString().split('T')[0];
+            usersDB[index].allowed = count > 0;
+            saveDB();
+            renderAdminUsers();
+            renderStoreGames();
+        }
+
+        function toggleOverallAccess(index) {
+            usersDB[index].allowed = !usersDB[index].allowed;
+            if (usersDB[index].allowed && usersDB[index].remainingDays <= 0) {
+                usersDB[index].totalDays = 30;
+                usersDB[index].remainingDays = 30;
+                usersDB[index].startDate = new Date().toISOString().split('T')[0];
+            }
+            saveDB();
+            renderAdminUsers();
+            renderStoreGames();
+        }
+
+        function openPayment() { document.getElementById('payment-modal').style.display = 'flex'; }
+        function closePayment() { document.getElementById('payment-modal').style.display = 'none'; }
+
+        // --- تشغيل الألعاب ---
+        function launchGame(type) {
+            document.getElementById('store-section').style.display = 'none';
+            document.getElementById('game-section').style.display = 'flex';
+            applySettingsAndStart();
+        }
+
+        function launchCustomGame(index) {
+            const game = customGamesDB[index];
+            document.getElementById('store-section').style.display = 'none';
+            document.getElementById('dynamic-game-section').style.display = 'flex';
+            document.getElementById('dynamic-game-title').innerText = game.title;
+            
+            const iframe = document.getElementById('dynamic-iframe');
+            iframe.srcdoc = game.code;
+        }
+
+        function exitGame() {
+            document.getElementById('game-section').style.display = 'none';
+            document.getElementById('store-section').style.display = 'block';
+        }
+
+        function exitDynamicGame() {
+            document.getElementById('dynamic-game-section').style.display = 'none';
+            document.getElementById('store-section').style.display = 'block';
+            document.getElementById('dynamic-iframe').srcdoc = '';
+        }
+
+        // --- محرك اللعبة الأساسية ---
+        function applySettingsAndStart() {
+            document.getElementById('pink-team-display').innerText = document.getElementById('pink-name-input').value || 'فريق البنات';
+            document.getElementById('blue-team-display').innerText = document.getElementById('blue-name-input').value || 'فريق الشباب';
+            document.getElementById('winner-screen').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
